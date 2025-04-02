@@ -1,0 +1,58 @@
+You can install them using the following commands:
+
+# Install Nextclade (via conda)
+conda install -c conda-forge nextclade
+
+# Install MAFFT (for alignment)
+sudo apt-get install mafft
+
+# Install IQ-TREE (for phylogenetic tree building)
+sudo apt-get install iqtree
+
+Step 2: Detect Variants and Lineage Assignment
+---------------------------------------------
+A. Detecting Variants with Nextclade
+--------------------------------------
+#Step 1:Prepare the FASTA file containing your SARS-CoV-2 sequences.
+#Step 2:Run Nextclade to assign lineages and detect mutations:
+
+   #Download a dataset first (run this in the home directory)
+   nextclade dataset get --name sars-cov-2 --output-dir dataset/
+   
+   # Run Nextclade
+    nextclade run -D dataset/ -O nextclade_result sequence.fasta
+
+   #The output will contain lineage assignments, mutations, and other useful information for each sequence. You can review the results in the `nextclade_results` folder.
+
+# Step 3: Create aligned sequences and create a consensus genome
+   
+  #Perform multiple sequence alignment with MAFFT:
+
+   mafft --auto sequence.fasta > aligned_consensus_genomes.fasta
+
+# step 4: Build a phylogenetic tree:
+
+#First look for the best model
+
+   iqtree -s aligned_consensus_genomes.fasta -m MF -bb 1000 -alrt 1000
+ 
+#Then build a tree#In this case GTR+F+R2 was found to be the best model
+     iqtree -s aligned_consensus_genomes.fasta -m GTR+F+R2  -bb 1000 -alrt 1000 -redo
+
+
+
+   - `-m GTR+F+R2` specifies the substitution model.
+   - `-bb 1000` runs bootstrapping with 1000 replicates.
+   - `-alrt 1000` calculates approximate likelihood ratio test (aLRT) values.
+
+   #This will generate a phylogenetic tree (`aligned_consensus_genomes.fasta.treefile` to use for visualisation) and additional outputs.
+
+
+5. Visualize the Phylogenetic Tree
+-----------------------------------
+You can visualize the tree using tools like **iTOL** or **FigTree**.
+
+- **iTOL**: Web-based interactive tool for visualizing phylogenetic trees. You can upload your tree file to the iTOL server: https://itol.embl.de/.
+  
+- **FigTree**: A desktop application for viewing phylogenetic trees.
+
