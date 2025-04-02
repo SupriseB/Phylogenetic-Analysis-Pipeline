@@ -1,66 +1,86 @@
-# SARS-CoV-2 Analysis Pipeline
+# README: SARS-CoV-2 Phylogenetic Analysis Pipeline
 
-## Overview
-This pipeline provides a step-by-step guide for analyzing SARS-CoV-2 sequences (FASTA format), including variant detection, lineage assignment, multiple sequence alignment, phylogenetic tree construction, and visualization.
+This pipeline enables the detection of SARS-CoV-2 variants, lineage assignment, multiple sequence alignment, and phylogenetic tree construction using Nextclade, MAFFT, and IQ-TREE.
 
-## Requirements
-Ensure that the following dependencies are installed:
-- [Conda](https://docs.conda.io/en/latest/)
-- [MAFFT](https://mafft.cbrc.jp/alignment/software/)
-- [IQ-TREE](http://www.iqtree.org/)
-- [Nextclade](https://github.com/nextstrain/nextclade)
-- [Python](https://www.python.org/) with the `ete3` library for visualization
+## Prerequisites
+Ensure you have the necessary tools installed before running the pipeline.
 
-## Installation
-Run the following commands to install the required tools:
+### Installation
+You can install the required tools using the following commands:
+
 ```bash
+# Install Nextclade (via conda)
 conda install -c conda-forge nextclade
+
+# Install MAFFT (for alignment)
 sudo apt-get install mafft
+
+# Install IQ-TREE (for phylogenetic tree building)
 sudo apt-get install iqtree
 ```
 
-## Usage
+## Step 1: Detect Variants and Assign Lineages
 
-### 1. Detect Variants and Assign Lineages
-Download the Nextclade dataset and analyze SARS-CoV-2 sequences:
-```bash
-nextclade dataset get --name sars-cov-2 --output-dir dataset/
-nextclade run -D dataset/ -O nextclade_result sequence.fasta
-```
-Results, including lineage assignments and detected mutations, will be stored in the `nextclade_result` folder.
+### A. Detecting Variants with Nextclade
 
-### 2. Align Sequences and Generate Consensus Genome
+1. Prepare the FASTA file containing your SARS-CoV-2 sequences.
+2. Download the required Nextclade dataset:
+
+   ```bash
+   nextclade dataset get --name sars-cov-2 --output-dir dataset/
+   ```
+
+3. Run Nextclade to assign lineages and detect mutations:
+
+   ```bash
+   nextclade run -D dataset/ -O nextclade_result sequence.fasta
+   ```
+
+   The output will contain lineage assignments, mutations, and other useful information for each sequence, available in the `nextclade_results` folder.
+
+## Step 2: Create Aligned Sequences and Generate a Consensus Genome
+
 Perform multiple sequence alignment using MAFFT:
+
 ```bash
 mafft --auto sequence.fasta > aligned_consensus_genomes.fasta
 ```
 
-### 3. Build a Phylogenetic Tree
-Construct a phylogenetic tree using IQ-TREE:
+## Step 3: Build a Phylogenetic Tree
+
+### A. Identify the Best Model
+First, determine the best substitution model using IQ-TREE:
+
 ```bash
-iqtree -s aligned_consensus_genomes.fasta -m GTR+G -bb 1000 -alrt 1000
-```
-This will generate a tree file named `aligned_consensus_genomes.fasta.treefile`.
-
-### 4. Visualize the Phylogenetic Tree
-#### Using iTOL
-- Upload the generated tree file to [iTOL](https://itol.embl.de/).
-
-#### Using FigTree
-- Open the tree file in [FigTree](http://tree.bio.ed.ac.uk/software/figtree/).
-
-#### Using Python (ete3 library)
-Run the following Python script to visualize the tree:
-```python
-from ete3 import Tree
-t = Tree("aligned_consensus_genomes.fasta.treefile", format=1)
-t.show()
+iqtree -s aligned_consensus_genomes.fasta -m MF -bb 1000 -alrt 1000
 ```
 
-## Notes
-- Ensure that the input FASTA file is properly formatted before running the pipeline.
-- For large datasets, computation times may vary depending on system resources.
+### B. Construct the Phylogenetic Tree
+Once the best model is identified (e.g., `GTR+F+R2`), use the following command to build the tree:
 
-## License
-This project is licensed under the MIT License.
+```bash
+iqtree -s aligned_consensus_genomes.fasta -m GTR+F+R2 -bb 1000 -alrt 1000 -redo
+```
+
+- `-m GTR+F+R2` specifies the substitution model.
+- `-bb 1000` runs bootstrapping with 1000 replicates.
+- `-alrt 1000` calculates approximate likelihood ratio test (aLRT) values.
+
+This will generate a phylogenetic tree (`aligned_consensus_genomes.fasta.treefile`) for visualization.
+
+## Step 4: Visualize the Phylogenetic Tree
+You can visualize the tree using tools such as:
+
+- **iTOL (Interactive Tree of Life):** Web-based tool for tree visualization. Upload your tree file to [iTOL](https://itol.embl.de/).
+- **FigTree:** A desktop application for phylogenetic tree visualization.
+
+---
+
+### Citation & Acknowledgments
+If you use this pipeline in your research, please cite the respective tools:
+- **Nextclade**: https://github.com/nextstrain/nextclade
+- **MAFFT**: https://mafft.cbrc.jp/alignment/software/
+- **IQ-TREE**: http://www.iqtree.org/
+
+For further inquiries, feel free to reach out!
 
